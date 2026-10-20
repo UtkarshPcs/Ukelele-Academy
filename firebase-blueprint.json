@@ -1,0 +1,144 @@
+{
+  "entities": {
+    "LearnerProgress": {
+      "title": "LearnerProgress",
+      "description": "Stores a learner's ukulele curriculum progress, daily practice streak, best streak, and tricky lesson bookmarks.",
+      "type": "object",
+      "properties": {
+        "uid": {
+          "type": "string",
+          "description": "The authenticated Firebase user UID owning this progress record.",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "displayName": {
+          "type": "string",
+          "description": "Learner display name shown in the academy header and progress dashboard.",
+          "minLength": 1,
+          "maxLength": 80
+        },
+        "currentLessonNumber": {
+          "type": "integer",
+          "description": "Current active lesson number from 1 to 44."
+        },
+        "completedLessonNumbers": {
+          "type": "array",
+          "description": "Bounded list (max 50) of completed lesson numbers."
+        },
+        "knownDifficulties": {
+          "type": "array",
+          "description": "Bounded list (max 44) of lesson titles marked tricky for review."
+        },
+        "practiceMinutesTotal": {
+          "type": "integer",
+          "description": "Cumulative practice minutes logged across lessons and timers."
+        },
+        "dailyStreakCount": {
+          "type": "integer",
+          "description": "Current consecutive daily practice streak count."
+        },
+        "bestStreakCount": {
+          "type": "integer",
+          "description": "Highest consecutive daily practice streak achieved."
+        },
+        "lastPracticeIsoDate": {
+          "type": "string",
+          "description": "ISO date string (YYYY-MM-DD) of the most recent practice activity.",
+          "minLength": 10,
+          "maxLength": 10,
+          "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}$"
+        },
+        "practicedIsoDates": {
+          "type": "array",
+          "description": "Bounded list (max 30) of recent ISO dates (YYYY-MM-DD) when the learner practiced."
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server timestamp when the learner profile was created."
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server timestamp when the learner progress was last updated."
+        }
+      },
+      "required": [
+        "uid",
+        "displayName",
+        "currentLessonNumber",
+        "completedLessonNumbers",
+        "knownDifficulties",
+        "practiceMinutesTotal",
+        "dailyStreakCount",
+        "bestStreakCount",
+        "lastPracticeIsoDate",
+        "practicedIsoDates",
+        "createdAt",
+        "updatedAt"
+      ]
+    },
+    "PracticeSession": {
+      "title": "PracticeSession",
+      "description": "Individual practice session log stored in a subcollection under the learner document.",
+      "type": "object",
+      "properties": {
+        "uid": {
+          "type": "string",
+          "description": "Owner Firebase UID matching parent learner document.",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "date": {
+          "type": "string",
+          "description": "Short human-readable date string (e.g. Oct 20).",
+          "minLength": 1,
+          "maxLength": 24
+        },
+        "lessonNumber": {
+          "type": "integer",
+          "description": "Lesson number practiced during this session (1 to 44)."
+        },
+        "lessonTitle": {
+          "type": "string",
+          "description": "Title of the lesson practiced.",
+          "minLength": 1,
+          "maxLength": 120
+        },
+        "minutes": {
+          "type": "integer",
+          "description": "Minutes practiced in this session (1 to 240)."
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server timestamp when the session log was created."
+        }
+      },
+      "required": [
+        "uid",
+        "date",
+        "lessonNumber",
+        "lessonTitle",
+        "minutes",
+        "createdAt"
+      ]
+    }
+  },
+  "firestore": {
+    "/learners/{userId}": {
+      "schema": {
+        "$ref": "#/entities/LearnerProgress"
+      },
+      "description": "Stores per-user ukulele curriculum progress, daily streak, and review queue keyed by Firebase Auth UID."
+    },
+    "/learners/{userId}/sessions/{sessionId}": {
+      "schema": {
+        "$ref": "#/entities/PracticeSession"
+      },
+      "description": "Subcollection of practice history logs belonging to a specific learner."
+    }
+  }
+}

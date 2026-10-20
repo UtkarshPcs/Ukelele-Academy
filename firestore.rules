@@ -1,0 +1,196 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Global Safety Net: Default-deny catch-all
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // Hardened Global Helpers
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isVerifiedUser() {
+      return isSignedIn() && request.auth.token.email_verified == true;
+    }
+
+    function isValidId(id) {
+      return id is string && id.size() >= 1 && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function incoming() {
+      return request.resource.data;
+    }
+
+    function existing() {
+      return resource.data;
+    }
+
+    // Validation Blueprint: LearnerProgress
+    function isValidLearnerProgress(data) {
+      return data.keys().hasAll([
+          'uid',
+          'displayName',
+          'currentLessonNumber',
+          'completedLessonNumbers',
+          'knownDifficulties',
+          'practiceMinutesTotal',
+          'dailyStreakCount',
+          'bestStreakCount',
+          'lastPracticeIsoDate',
+          'practicedIsoDates',
+          'createdAt',
+          'updatedAt'
+        ])
+        && data.keys().hasOnly([
+          'uid',
+          'displayName',
+          'currentLessonNumber',
+          'completedLessonNumbers',
+          'knownDifficulties',
+          'practiceMinutesTotal',
+          'dailyStreakCount',
+          'bestStreakCount',
+          'lastPracticeIsoDate',
+          'practicedIsoDates',
+          'createdAt',
+          'updatedAt'
+        ])
+        && data.uid == request.auth.uid
+        && data.uid is string
+        && data.uid.size() >= 1
+        && data.uid.size() <= 128
+        && data.uid.matches('^[a-zA-Z0-9_\\-]+$')
+        && data.displayName is string
+        && data.displayName.size() >= 1
+        && data.displayName.size() <= 80
+        && data.currentLessonNumber is int
+        && data.currentLessonNumber >= 1
+        && data.currentLessonNumber <= 44
+        && data.completedLessonNumbers is list
+        && data.completedLessonNumbers.size() <= 50
+        && (data.completedLessonNumbers.size() == 0 || data.completedLessonNumbers[0] is int)
+        && data.knownDifficulties is list
+        && data.knownDifficulties.size() <= 44
+        && (data.knownDifficulties.size() == 0 || (data.knownDifficulties[0] is string && data.knownDifficulties[0].size() <= 120))
+        && data.practiceMinutesTotal is int
+        && data.practiceMinutesTotal >= 0
+        && data.practiceMinutesTotal <= 100000
+        && data.dailyStreakCount is int
+        && data.dailyStreakCount >= 1
+        && data.dailyStreakCount <= 10000
+        && data.bestStreakCount is int
+        && data.bestStreakCount >= 1
+        && data.bestStreakCount <= 10000
+        && data.lastPracticeIsoDate is string
+        && data.lastPracticeIsoDate.size() == 10
+        && data.lastPracticeIsoDate.matches('^[0-9]{4}-[0-9]{2}-[0-9]{2}$')
+        && data.practicedIsoDates is list
+        && data.practicedIsoDates.size() >= 1
+        && data.practicedIsoDates.size() <= 30
+        && data.practicedIsoDates[0] is string
+        && data.practicedIsoDates[0].size() == 10
+        && data.createdAt is timestamp
+        && data.updatedAt is timestamp;
+    }
+
+    // Validation Blueprint: PracticeSession
+    function isValidPracticeSession(data) {
+      return data.keys().hasAll([
+          'uid',
+          'date',
+          'lessonNumber',
+          'lessonTitle',
+          'minutes',
+          'createdAt'
+        ])
+        && data.keys().hasOnly([
+          'uid',
+          'date',
+          'lessonNumber',
+          'lessonTitle',
+          'minutes',
+          'createdAt'
+        ])
+        && data.uid == request.auth.uid
+        && data.uid is string
+        && data.uid.size() >= 1
+        && data.uid.size() <= 128
+        && data.uid.matches('^[a-zA-Z0-9_\\-]+$')
+        && data.date is string
+        && data.date.size() >= 1
+        && data.date.size() <= 24
+        && data.lessonNumber is int
+        && data.lessonNumber >= 1
+        && data.lessonNumber <= 44
+        && data.lessonTitle is string
+        && data.lessonTitle.size() >= 1
+        && data.lessonTitle.size() <= 120
+        && data.minutes is int
+        && data.minutes >= 1
+        && data.minutes <= 240
+        && data.createdAt is timestamp;
+    }
+
+    // Master Collection: /learners/{userId}
+    match /learners/{userId} {
+      allow get: if isVerifiedUser()
+        && isValidId(userId)
+        && request.auth.uid == userId;
+
+      allow create: if isVerifiedUser()
+        && isValidId(userId)
+        && request.auth.uid == userId
+        && isValidLearnerProgress(incoming())
+        && incoming().createdAt == request.time
+        && incoming().updatedAt == request.time;
+
+      allow update: if isVerifiedUser()
+        && isValidId(userId)
+        && request.auth.uid == userId
+        && isValidLearnerProgress(incoming())
+        && incoming().uid == existing().uid
+        && incoming().createdAt == existing().createdAt
+        && incoming().updatedAt == request.time
+        && (
+          // Action: Sync Progress & Streak
+          incoming().diff(existing()).affectedKeys().hasOnly([
+            'displayName',
+            'currentLessonNumber',
+            'completedLessonNumbers',
+            'knownDifficulties',
+            'practiceMinutesTotal',
+            'dailyStreakCount',
+            'bestStreakCount',
+            'lastPracticeIsoDate',
+            'practicedIsoDates',
+            'updatedAt'
+          ])
+        );
+
+      // Subcollection: /learners/{userId}/sessions/{sessionId}
+      match /sessions/{sessionId} {
+        allow get: if isVerifiedUser()
+          && isValidId(userId)
+          && isValidId(sessionId)
+          && request.auth.uid == userId
+          && get(/databases/$(database)/documents/learners/$(userId)).data.uid == request.auth.uid;
+
+        allow list: if isVerifiedUser()
+          && request.auth.uid == userId
+          && resource.data.uid == request.auth.uid;
+
+        allow create: if isVerifiedUser()
+          && isValidId(userId)
+          && isValidId(sessionId)
+          && request.auth.uid == userId
+          && isValidPracticeSession(incoming())
+          && incoming().createdAt == request.time
+          && exists(/databases/$(database)/documents/learners/$(userId))
+          && get(/databases/$(database)/documents/learners/$(userId)).data.uid == request.auth.uid;
+      }
+    }
+  }
+}

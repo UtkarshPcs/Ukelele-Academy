@@ -1,0 +1,167 @@
+@import "tailwindcss";
+
+:root {
+  --color-cream: #FFF7E8;
+  --color-paper: #FFFCF5;
+  --color-ink: #12343B;
+  --color-ink-soft: #3F5C62;
+  --color-coral: #FF7A59;
+  --color-coral-hover: #F26A47;
+  --color-sunshine: #FFC857;
+  --color-lagoon: #3DB9A5;
+  --color-sage: #E4EFE7;
+  --color-hairline: rgba(18, 52, 59, 0.12);
+}
+
+/* Glass used strictly in 3 places: top nav, stage selected-part popover, and Koa drawer header */
+.koa-glass {
+  background-color: #FFF7E8;
+  background: rgba(255, 247, 232, 0.62);
+  backdrop-filter: blur(16px) saturate(140%);
+  -webkit-backdrop-filter: blur(16px) saturate(140%);
+  border: 1px solid rgba(255, 255, 255, 0.55);
+}
+
+/* Soft warm shadow token */
+.koa-shadow {
+  box-shadow:
+    0 10px 30px -12px rgba(18, 52, 59, 0.18),
+    0 2px 6px rgba(18, 52, 59, 0.06);
+}
+
+/* Visible accessible focus ring (2px Ink + 3px Sunshine) */
+.koa-focus:focus-visible {
+  outline: 2px solid #12343B;
+  box-shadow: 0 0 0 5px #FFC857;
+}
+
+/* Soft Fraunces display heading style */
+.font-fraunces {
+  font-family: var(--font-display), Georgia, serif;
+  font-variation-settings: "SOFT" 100, "opsz" 48;
+}
+
+/* DM Mono strictly for timer, chord charts, and tab notation */
+.font-dm-mono {
+  font-family: var(--font-mono), monospace;
+}
+
+/* Damped sine string vibration (1.4s decay) */
+@keyframes string-damped-pluck {
+  0% {
+    transform: translateY(0px);
+  }
+  10% {
+    transform: translateY(-4.5px);
+  }
+  20% {
+    transform: translateY(4px);
+  }
+  32% {
+    transform: translateY(-3px);
+  }
+  45% {
+    transform: translateY(2.2px);
+  }
+  60% {
+    transform: translateY(-1.4px);
+  }
+  75% {
+    transform: translateY(0.8px);
+  }
+  90% {
+    transform: translateY(-0.3px);
+  }
+  100% {
+    transform: translateY(0px);
+  }
+}
+
+.animate-string-pluck {
+  animation: string-damped-pluck 1.4s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+/* Hotspot pulsing ring */
+@keyframes koa-hotspot-pulse {
+  0% {
+    transform: scale(0.88);
+    opacity: 0.85;
+  }
+  70% {
+    transform: scale(1.38);
+    opacity: 0;
+  }
+  100% {
+    transform: scale(1.38);
+    opacity: 0;
+  }
+}
+
+.animate-hotspot-pulse {
+  animation: koa-hotspot-pulse 2.2s cubic-bezier(0.22, 1, 0.36, 1) infinite;
+}
+
+/* Rosette slow rotation */
+@keyframes koa-rosette-spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.animate-rosette-spin {
+  animation: koa-rosette-spin 28s linear infinite;
+}
+
+/* Sunburst celebration ring burst */
+@keyframes koa-sunburst-burst {
+  0% {
+    transform: scale(0.5);
+    opacity: 1;
+  }
+  100% {
+    transform: scale(1.85);
+    opacity: 0;
+  }
+}
+
+.animate-sunburst-burst {
+  animation: koa-sunburst-burst 750ms cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+
+/* Chord dot ripple entry */
+@keyframes koa-dot-ripple {
+  0% {
+    transform: scale(0.3);
+    opacity: 0;
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+.animate-dot-ripple {
+  animation: koa-dot-ripple 380ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+/* Respect prefers-reduced-motion */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  ::before,
+  ::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+  .animate-string-pluck,
+  .animate-hotspot-pulse,
+  .animate-rosette-spin,
+  .animate-sunburst-burst,
+  .animate-dot-ripple {
+    animation: none !important;
+  }
+}

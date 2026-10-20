@@ -1,0 +1,10 @@
+{
+  "name": "Koa & Strum — Beginner Ukulele Academy",
+  "description": "An interactive, step-by-step ukulele learning platform and AI tutor designed to take complete beginners with zero musical experience to confidently playing real songs.",
+  "requestFramePermissions": [
+    "microphone"
+  ],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}
